@@ -75,9 +75,13 @@ int main() {
   Texture2D dead_face_texture = LoadTexture("assets/faces/dead.png");
   Texture2D happy_face_texture = LoadTexture("assets/faces/happy.png");
 
-  Texture2D neutral_face_texture = LoadTexture("assets/faces/neutral.png");
+  Texture2D pupil_texture = LoadTexture("assets/faces/pupil.png");
+  Texture2D neutral_face_texture =
+      LoadTexture("assets/faces/template_neutral.png");
   float neutral_face_scale = 2.0;
   Texture2D current_face = neutral_face_texture;
+  int neutral_texture_id = neutral_face_texture.id;
+  // TraceLog(LOG_WARNING, "ID: %d", current_face.id);
   int face_timeout = 0;
 
   Texture2D paddle_texture = LoadTexture("assets/paddle.png");
@@ -100,7 +104,7 @@ int main() {
   Vector2 ball_position = {paddle_position.x + paddle_midpoint,
                            paddle_position.y - ball_radius};
   Vector2 ball_direction = {0, 0};
-  int ball_speed = 10 * 1.75;
+  int ball_speed = 10 * 0.75;
 
   GameState game_state = how_to_play;
   bool hit_paddle_last_frame = false;
@@ -183,6 +187,7 @@ int main() {
       PlaySound(collision_sfx);
       if (!hit_paddle_last_frame) {
         hit_paddle_last_frame = true;
+        ball_speed *= 1.2;
 
         if (paddle_position.x - ball_radius < ball_position.x &&
             ball_position.x < paddle_position.x + paddle_edge) {
@@ -311,6 +316,33 @@ int main() {
             neutral_face_texture.height / neutral_face_scale,
         });
 
+    if (current_face.id == neutral_texture_id) {
+      Vector2 left_eye_position = {paddle_position.x + paddle_midpoint - 20,
+                                   paddle_position.y + 6};
+      Vector2 left_pupil_position =
+          Vector2Subtract(ball_position, left_eye_position);
+      left_pupil_position = Vector2Normalize(left_pupil_position);
+      left_pupil_position.x = left_pupil_position.x * 6;
+      left_pupil_position.y = left_pupil_position.y * 6;
+
+      draw_texture(pupil_texture,
+                   (Rectangle){left_eye_position.x + left_pupil_position.x,
+                               left_eye_position.y + left_pupil_position.y, 10,
+                               10});
+
+      Vector2 right_eye_position = {paddle_position.x + paddle_midpoint + 10,
+                                    paddle_position.y + 6};
+      Vector2 right_pupil_position =
+          Vector2Subtract(ball_position, right_eye_position);
+      right_pupil_position = Vector2Normalize(right_pupil_position);
+      right_pupil_position.x = right_pupil_position.x * 6;
+      right_pupil_position.y = right_pupil_position.y * 6;
+      draw_texture(pupil_texture,
+                   (Rectangle){right_eye_position.x + right_pupil_position.x,
+                               right_eye_position.y + right_pupil_position.y,
+                               10, 10});
+    }
+
     for (int i = 0; i < total_particles; i++) {
       draw_texture(particle_texture, (Rectangle){particles[i].x - ball_radius,
                                                  particles[i].y - ball_radius,
@@ -360,6 +392,7 @@ int main() {
           MAGENTA);
       DrawCircleV(ball_position, ball_radius, LIME);
     }
+
     EndDrawing();
   }
 
