@@ -54,8 +54,6 @@ int main() {
   Sound lose_sfx = LoadSound("assets/lose.wav");
   Sound hurt_sfx = LoadSound("assets/hurt.wav");
 
-  Texture2D game_over_texture = LoadTexture("assets/game_over.png");
-
   Texture2D key_a_texture = LoadTexture("assets/keyboard_a.png");
   Texture2D key_d_texture = LoadTexture("assets/keyboard_d.png");
   Texture2D key_j_texture = LoadTexture("assets/keyboard_j.png");
@@ -66,7 +64,7 @@ int main() {
   Vector2 heart_position = {0, 0};
   float heart_scale = 4.0;
 
-#define total_blocks 30
+#define total_blocks 40
   Rectangle blocks[total_blocks] = {};
   populate_blocks(blocks, total_blocks);
 
@@ -89,6 +87,7 @@ int main() {
                              screen_height -
                                  paddle_texture.height / paddle_scale};
   int paddle_speed = 20;
+  float paddle_edge = 30;
 
 #define total_particles 50
   Vector2 particles[total_particles] = {};
@@ -101,13 +100,18 @@ int main() {
   Vector2 ball_position = {paddle_position.x + paddle_midpoint,
                            paddle_position.y - ball_radius};
   Vector2 ball_direction = {0, 0};
-  int ball_speed = 10 * 1;
+  int ball_speed = 10 * 1.75;
 
   GameState game_state = how_to_play;
+  bool hit_paddle_last_frame = false;
+  bool hit_block_last_frame = false;
 
   while (!WindowShouldClose()) {
     float dt = GetFrameTime();
     UpdateMusicStream(bgm);
+
+    Vector2 mouse_position = GetMousePosition();
+    paddle_position.x = mouse_position.x;
 
     if (IsKeyDown(KEY_A)) {
       if (game_state != game_over)
@@ -117,13 +121,14 @@ int main() {
       if (game_state != game_over)
         paddle_position.x += paddle_speed;
     }
-    if (IsKeyPressed(KEY_J)) {
+    if (IsKeyPressed(KEY_J) || IsMouseButtonPressed(0)) {
       if (game_state == how_to_play) {
         PlayMusicStream(bgm);
       }
       if (game_state == how_to_play || game_state == to_serve) {
         game_state = playing;
-        ball_direction = (Vector2){0.1, -1};
+        int range = GetRandomValue(-15, 15);
+        ball_direction = (Vector2){cos((90 + range) * DEG2RAD), -1};
       }
     }
     if (IsKeyPressed(KEY_SPACE)) {
@@ -158,9 +163,7 @@ int main() {
     }
     if (ball_position.y + ball_radius > screen_height) {
       ball_direction.y *= -1;
-      /// @todo: should have this if?
-      if (hearts > 0)
-        hearts--;
+      hearts--;
       current_face = sad_face_texture;
       face_timeout = 30;
       PlaySound(hurt_sfx);
@@ -177,17 +180,80 @@ int main() {
     }
 
     if (CheckCollisionCircleRec(ball_position, ball_radius, paddle_rect)) {
-      ball_direction.y *= -1;
       PlaySound(collision_sfx);
+      if (!hit_paddle_last_frame) {
+        hit_paddle_last_frame = true;
+
+        if (paddle_position.x - ball_radius < ball_position.x &&
+            ball_position.x < paddle_position.x + paddle_edge) {
+          // TraceLog(LOG_WARNING, "Hit left corner");
+          ball_direction.y *= -1;
+          int range = GetRandomValue(-15, 15);
+          ball_direction.x = cos(((105 + range) * DEG2RAD));
+        } else if (paddle_position.x + paddle_edge < ball_position.x &&
+                   ball_position.x < paddle_position.x + (paddle_midpoint * 2) -
+                                         paddle_edge) {
+          // TraceLog(LOG_WARNING, "Hit center");
+          ball_direction.y *= -1;
+        } else if (paddle_position.x + (paddle_midpoint * 2) - paddle_edge <
+                       ball_position.x &&
+                   ball_position.x < paddle_position.x + (paddle_midpoint * 2) +
+                                         ball_radius) {
+          // TraceLog(LOG_WARNING, "Hit right corner");
+          ball_direction.y *= -1;
+          int range = GetRandomValue(-15, 15);
+          ball_direction.x = cos(((45 + range) * DEG2RAD));
+        } else if (ball_position.y > paddle_position.y) {
+          // TraceLog(LOG_WARNING, "Hit side");
+          ball_direction.x *= -1;
+        } else {
+          // TraceLog(LOG_WARNING, "Hit but...");
+        }
+      }
+    } else {
+      hit_paddle_last_frame = false;
     }
 
     for (int i = 0; i < total_blocks; i++) {
       if (CheckCollisionCircleRec(ball_position, ball_radius, blocks[i])) {
-        blocks[i] = (Rectangle){0, 0, 0, 0};
-        ball_direction.y *= -1;
-        PlaySound(collision_sfx);
-        current_face = happy_face_texture;
-        face_timeout = 30;
+        if (!hit_block_last_frame) {
+          hit_block_last_frame = true;
+
+          /// @todo: maybe someday do a better collision detection
+          /// it would need some way to detect gaps to act as
+          /// individual blocks or whole blocks
+          // Rectangle block = blocks[i];
+          // if (block.x - ball_radius < ball_position.x &&
+          //     ball_position.x < block.x + paddle_edge) {
+          //   TraceLog(LOG_WARNING, "Hit left corner");
+          //   ball_direction.y *= -1;
+          //   int range = GetRandomValue(-15, 15);
+          //   ball_direction.x = cos(((105 + range) * DEG2RAD));
+          // } else if (block.x + paddle_edge < ball_position.x &&
+          //            ball_position.x < block.x + block.width - paddle_edge) {
+          //   TraceLog(LOG_WARNING, "Hit center");
+          //   ball_direction.y *= -1;
+          // } else if (block.x + block.width - paddle_edge < ball_position.x &&
+          //            ball_position.x < block.x + block.width + ball_radius) {
+          //   TraceLog(LOG_WARNING, "Hit right corner");
+          //   ball_direction.y *= -1;
+          //   int range = GetRandomValue(-15, 15);
+          //   ball_direction.x = cos(((45 + range) * DEG2RAD));
+          // } else if (ball_position.y > block.y) {
+          //   TraceLog(LOG_WARNING, "Hit side");
+          //   ball_direction.x *= -1;
+          // } else {
+          //   TraceLog(LOG_WARNING, "Hit but...");
+          // }
+
+          ball_direction.y *= -1;
+          current_face = happy_face_texture;
+          face_timeout = 30;
+          PlaySound(collision_sfx);
+          blocks[i] = (Rectangle){0, 0, 0, 0};
+        }
+      } else {
+        hit_block_last_frame = false;
       }
     }
 
@@ -277,6 +343,23 @@ int main() {
                                half_screen_height - 30, 130, 130});
     }
 
+    if (false) {
+      DrawRectangleRec((Rectangle){paddle_position.x, paddle_position.y,
+                                   paddle_edge,
+                                   screen_height - paddle_position.y},
+                       MAGENTA);
+      DrawRectangleRec((Rectangle){paddle_position.x + paddle_edge,
+                                   paddle_position.y,
+                                   (paddle_midpoint * 2) - paddle_edge,
+                                   screen_height - paddle_position.y},
+                       PURPLE);
+      DrawRectangleRec(
+          (Rectangle){paddle_position.x + (paddle_midpoint * 2) - paddle_edge,
+                      paddle_position.y, paddle_edge,
+                      screen_height - paddle_position.y},
+          MAGENTA);
+      DrawCircleV(ball_position, ball_radius, LIME);
+    }
     EndDrawing();
   }
 
