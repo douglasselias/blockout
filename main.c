@@ -54,10 +54,8 @@ int main() {
   Sound lose_sfx = LoadSound("assets/lose.wav");
   Sound hurt_sfx = LoadSound("assets/hurt.wav");
 
-  Texture2D key_a_texture = LoadTexture("assets/keyboard_a.png");
-  Texture2D key_d_texture = LoadTexture("assets/keyboard_d.png");
-  Texture2D key_j_texture = LoadTexture("assets/keyboard_j.png");
-  Texture2D key_space_texture = LoadTexture("assets/keyboard_space.png");
+  Texture2D mouse_texture = LoadTexture("assets/mouse_horizontal.png");
+  Texture2D mouse_left_texture = LoadTexture("assets/mouse_left.png");
 
   int hearts = 3;
   Texture2D heart_texture = LoadTexture("assets/heart.png");
@@ -81,7 +79,6 @@ int main() {
   float neutral_face_scale = 2.0;
   Texture2D current_face = neutral_face_texture;
   int neutral_texture_id = neutral_face_texture.id;
-  // TraceLog(LOG_WARNING, "ID: %d", current_face.id);
   int face_timeout = 0;
 
   Texture2D paddle_texture = LoadTexture("assets/paddle.png");
@@ -104,7 +101,7 @@ int main() {
   Vector2 ball_position = {paddle_position.x + paddle_midpoint,
                            paddle_position.y - ball_radius};
   Vector2 ball_direction = {0, 0};
-  int ball_speed = 10 * 0.75;
+  int ball_speed = 10;
 
   GameState game_state = how_to_play;
   bool hit_paddle_last_frame = false;
@@ -115,17 +112,10 @@ int main() {
     UpdateMusicStream(bgm);
 
     Vector2 mouse_position = GetMousePosition();
-    paddle_position.x = mouse_position.x;
+    if (game_state != game_over)
+      paddle_position.x = mouse_position.x;
 
-    if (IsKeyDown(KEY_A)) {
-      if (game_state != game_over)
-        paddle_position.x -= paddle_speed;
-    }
-    if (IsKeyDown(KEY_D)) {
-      if (game_state != game_over)
-        paddle_position.x += paddle_speed;
-    }
-    if (IsKeyPressed(KEY_J) || IsMouseButtonPressed(0)) {
+    if (IsMouseButtonPressed(0)) {
       if (game_state == how_to_play) {
         PlayMusicStream(bgm);
       }
@@ -134,8 +124,6 @@ int main() {
         int range = GetRandomValue(-15, 15);
         ball_direction = (Vector2){cos((90 + range) * DEG2RAD), -1};
       }
-    }
-    if (IsKeyPressed(KEY_SPACE)) {
       if (game_state == game_over) {
         game_state = to_serve;
         hearts = 3;
@@ -147,6 +135,7 @@ int main() {
         populate_blocks(blocks, total_blocks);
         PlayMusicStream(bgm);
         current_face = neutral_face_texture;
+        ball_speed = 5;
       }
     }
 
@@ -187,7 +176,7 @@ int main() {
       PlaySound(collision_sfx);
       if (!hit_paddle_last_frame) {
         hit_paddle_last_frame = true;
-        ball_speed *= 1.2;
+        ball_speed *= 1.09;
 
         if (paddle_position.x - ball_radius < ball_position.x &&
             ball_position.x < paddle_position.x + paddle_edge) {
@@ -356,21 +345,21 @@ int main() {
     if (game_state == how_to_play) {
       DrawText("Move", half_screen_width - 120, half_screen_height - 80, 34,
                RED);
-      DrawTexture(key_a_texture, half_screen_width - 150, half_screen_height,
-                  WHITE);
-      DrawTexture(key_d_texture, half_screen_width - 70, half_screen_height,
-                  WHITE);
+      DrawTexture(mouse_texture, half_screen_width - 140,
+                  half_screen_height - 50, WHITE);
 
       DrawText("Serve", half_screen_width + 100, half_screen_height - 80, 34,
                RED);
-      DrawTexture(key_j_texture, half_screen_width + 120, half_screen_height,
-                  WHITE);
+      draw_texture(mouse_left_texture,
+                   (Rectangle){half_screen_width + 100, half_screen_height - 27,
+                               mouse_texture.width / 1.5,
+                               mouse_texture.height / 1.5});
     }
 
     if (game_state == game_over) {
       DrawText("Restart", half_screen_width - 70, half_screen_height - 80, 34,
                RED);
-      draw_texture(key_space_texture,
+      draw_texture(mouse_left_texture,
                    (Rectangle){half_screen_width - (130 / 2.0),
                                half_screen_height - 30, 130, 130});
     }
