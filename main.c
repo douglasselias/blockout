@@ -216,30 +216,6 @@ int main() {
           /// @todo: maybe someday do a better collision detection
           /// it would need some way to detect gaps to act as
           /// individual blocks or whole blocks
-          // Rectangle block = blocks[i];
-          // if (block.x - ball_radius < ball_position.x &&
-          //     ball_position.x < block.x + paddle_edge) {
-          //   TraceLog(LOG_WARNING, "Hit left corner");
-          //   ball_direction.y *= -1;
-          //   int range = GetRandomValue(-15, 15);
-          //   ball_direction.x = cos(((105 + range) * DEG2RAD));
-          // } else if (block.x + paddle_edge < ball_position.x &&
-          //            ball_position.x < block.x + block.width - paddle_edge) {
-          //   TraceLog(LOG_WARNING, "Hit center");
-          //   ball_direction.y *= -1;
-          // } else if (block.x + block.width - paddle_edge < ball_position.x &&
-          //            ball_position.x < block.x + block.width + ball_radius) {
-          //   TraceLog(LOG_WARNING, "Hit right corner");
-          //   ball_direction.y *= -1;
-          //   int range = GetRandomValue(-15, 15);
-          //   ball_direction.x = cos(((45 + range) * DEG2RAD));
-          // } else if (ball_position.y > block.y) {
-          //   TraceLog(LOG_WARNING, "Hit side");
-          //   ball_direction.x *= -1;
-          // } else {
-          //   TraceLog(LOG_WARNING, "Hit but...");
-          // }
-
           ball_direction.y *= -1;
           current_face = happy_face_texture;
           face_timeout = 30;
